@@ -1,6 +1,4 @@
 const Accounts = require('./accounts-model');
-const yup = require('yup');
-
 const checkAccountNameUnique = (req, res, next) => {
   // DO YOUR MAGIC
 }
@@ -20,27 +18,27 @@ const checkAccountId = (req, res, next) => {
 
 }
 
-const accountSchema = yup.object().shape({
-  name: yup
-    .string("name of account must be a string")
-    .trim('whitespace alone does not count')
-    .required('name and budget are required')
-    .min(3, 'name needs to be 3 chars long')
-    .max(100, 'name cannot be longer than 100'),
-  budget: yup
-    .number()
-    .required('name and budget are required')
-})
-
-async function checkAccountPayload(req, res, next) {
+const checkAccountPayload = (req, res, next) => {
   // DO YOUR MAGIC
-  try { 
-    const validated = await accountSchema.validate(req.body,
-      { strict: false, stripUnknown: true })
-    req.body = validated
+  const error = { status: 400};
+  const { name, budget } = req.body;
+  
+  if (name === undefined || budget === undefined) {
+    error.message = 'name and budget are required'
+  } else if (typeof name !== 'string') {
+    error.message = 'name of account must be a string'
+  } else if (name.trim().length < 3 || name.trim().length > 100) {
+    error.message = 'name of account must be between 3 and 100'
+  } else if (typeof budget !== 'number' || isNaN(budget)) {
+    error.message = 'budget of account must be a number'
+  } else if (budget < 0 || budget > 1000000) {
+    error.message = 'budget of account is too large or too small'
+  }
+
+  if (error.message) {
+    next(error)
+  } else {
     next()
-  } catch (err) {
-    next({ status: 400, message:"name and budget are required"})
   }
 }
 
